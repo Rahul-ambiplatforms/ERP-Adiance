@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import OutProduct from '../models/outproduct.model.js';
 import ProductModel from "../models/product.model.js";
 import CategoryModel from "../models/category.model.js"; // Ensure this is imported
-import SubCategoryModel from "../models/subcategory.model.js"; // Ensure this is imported
+import SubCategoryModel from "../models/subCategory.model.js";
 
 // Add Out Product
 export const addOutProduct = async (req, res) => {
