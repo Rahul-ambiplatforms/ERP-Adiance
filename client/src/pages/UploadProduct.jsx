@@ -20,6 +20,8 @@ const UploadProduct = () => {
   const [excelFile, setExcelFile] = useState(null);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false); // Upload Excel Modal
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false); // Verify Excel Modal
+  const ITEMS_PER_PAGE = 20; // Define number of items per page
+  const [currentPage, setCurrentPage] = useState(1); // Track current page
 
   const [selectCategory, setSelectCategory] = useState("");
   const [selectSubCategory, setSelectSubCategory] = useState("");
@@ -344,6 +346,20 @@ const fetchRejectedData = async () => {
     writeFile(workbook, "Uploaded_Parts_History.xlsx");
   };
 
+
+  const totalPages = Math.ceil(filteredHistory.length / ITEMS_PER_PAGE);
+
+const paginatedHistory = filteredHistory.slice(
+  (currentPage - 1) * ITEMS_PER_PAGE,
+  currentPage * ITEMS_PER_PAGE
+);
+
+const handlePageChange = (newPage) => {
+  if (newPage >= 1 && newPage <= totalPages) {
+    setCurrentPage(newPage);
+  }
+};
+
   
   return (
     <section className="bg-white">
@@ -481,8 +497,8 @@ const fetchRejectedData = async () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredHistory.length > 0 ? (
-                  filteredHistory.map((item, index) => (
+                {paginatedHistory.length > 0 ? (
+                  paginatedHistory.map((item, index) => (
                     <tr
                       key={index}
                       className={`text-center ${
@@ -514,6 +530,30 @@ const fetchRejectedData = async () => {
             </table>
           </div>
         </div>
+
+
+        {totalPages > 1 && (
+  <div className="flex justify-between items-center mt-4">
+    <button
+      onClick={() => handlePageChange(currentPage - 1)}
+      disabled={currentPage === 1}
+      className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+    >
+      Previous
+    </button>
+    <span>
+      Page {currentPage} of {totalPages}
+    </span>
+    <button
+      onClick={() => handlePageChange(currentPage + 1)}
+      disabled={currentPage === totalPages}
+      className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+    >
+      Next
+    </button>
+  </div>
+)}
+
 
 
         {/* Modal */}

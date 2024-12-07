@@ -32,6 +32,9 @@ const OutProduct = () => {
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+  const ITEMS_PER_PAGE = 20; // Number of items to display per page
+  const [currentPage, setCurrentPage] = useState(1); // Initialize current page
+
 
   // Fetch history data
   const fetchHistory = async () => {
@@ -158,6 +161,18 @@ const OutProduct = () => {
 
   const filteredHistory = applyFilters();
 
+  const paginatedHistory = filteredHistory.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  const totalPages = Math.ceil(filteredHistory.length / ITEMS_PER_PAGE);
 
   const downloadHistory = () => {
     if (filteredHistory.length === 0) {
@@ -247,56 +262,77 @@ const OutProduct = () => {
         </div>
 
         {/* History Table */}
-        <div className="mt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-md">Out Product History</h3>
-            <button
-              onClick={downloadHistory} // Replace this with your download function
-              className="bg-blue-500 text-white py-1 px-4 rounded hover:bg-blue-600"
-            >
-              Download
-            </button>
-          </div>
-          <div className="overflow-auto">
-            <table className="w-full border-collapse border border-gray-200">
-              <thead>
-                <tr className="bg-blue-50">
-                  <th className="border border-gray-300 px-4 py-2">Camera Name</th>
-                  <th className="border border-gray-300 px-4 py-2">Parts Name</th>
-                  <th className="border border-gray-300 px-4 py-2">Parts Code</th>
-                  <th className="border border-gray-300 px-4 py-2">Box No.</th>
-                  <th className="border border-gray-300 px-4 py-2">Qty</th>
-                  <th className="border border-gray-300 px-4 py-2">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredHistory.length > 0 ? (
-                  filteredHistory.map((item, index) => (
-                    <tr key={index} className="text-center">
-                      <td className="border border-gray-300 px-4 py-2">{item.categoryName}</td>
-                      <td className="border border-gray-300 px-4 py-2">{item.subCategoryName}</td>
-                      <td className="border border-gray-300 px-4 py-2">{item.subCategoryCode}</td>
-                      <td className="border border-gray-300 px-4 py-2">{item.boxNo}</td>
-                      <td className="border border-gray-300 px-4 py-2">{item.partsQty}</td>
-                      <td className="border border-gray-300 px-4 py-2">{item.date}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      className="border border-gray-300 px-4 py-2 text-center"
-                      colSpan="6"
+              <div className="mt-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-semibold text-md">Out Product History</h3>
+                  <button
+                    onClick={downloadHistory}
+                    className="bg-blue-500 text-white py-1 px-4 rounded hover:bg-blue-600"
+                  >
+                    Download
+                  </button>
+                </div>
+                <div className="overflow-auto">
+                  <table className="w-full border-collapse border border-gray-200">
+                    <thead>
+                      <tr className="bg-blue-50">
+                        <th className="border border-gray-300 px-4 py-2">Camera Name</th>
+                        <th className="border border-gray-300 px-4 py-2">Parts Name</th>
+                        <th className="border border-gray-300 px-4 py-2">Parts Code</th>
+                        <th className="border border-gray-300 px-4 py-2">Box No.</th>
+                        <th className="border border-gray-300 px-4 py-2">Qty</th>
+                        <th className="border border-gray-300 px-4 py-2">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedHistory.length > 0 ? (
+                        paginatedHistory.map((item, index) => (
+                          <tr key={index} className="text-center">
+                            <td className="border border-gray-300 px-4 py-2">{item.categoryName}</td>
+                            <td className="border border-gray-300 px-4 py-2">{item.subCategoryName}</td>
+                            <td className="border border-gray-300 px-4 py-2">{item.subCategoryCode}</td>
+                            <td className="border border-gray-300 px-4 py-2">{item.boxNo}</td>
+                            <td className="border border-gray-300 px-4 py-2">{item.partsQty}</td>
+                            <td className="border border-gray-300 px-4 py-2">{item.date}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            className="border border-gray-300 px-4 py-2 text-center"
+                            colSpan="6"
+                          >
+                            No history available for the selected filters.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex justify-between items-center mt-4">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
                     >
-                      No history available for the selected filters.
-                    </td>
-                  </tr>
+                      Previous
+                    </button>
+                    <span>
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        </div>
-
+                  </div>
+                  </div>
 
       {/* Modal Section */}
       {isModalOpen && (
@@ -339,11 +375,12 @@ const OutProduct = () => {
                   <option value="">Select Part</option>
                   {filteredSubCategories.map((sub) => (
                     <option key={sub._id} value={sub._id}>
-                      {sub.name}
+                      {`${sub.code} - ${sub.name}`}
                     </option>
                   ))}
                 </select>
               </div>
+
 
               {/* Select Box */}
               <div className="grid gap-1">

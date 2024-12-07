@@ -9,6 +9,9 @@ import { utils, writeFile } from "xlsx";
 const DamageProduct = () => {
   const allCategory = useSelector((state) => state.product.allCategory);
   const allSubCategory = useSelector((state) => state.product.allSubCategory);
+  const ITEMS_PER_PAGE = 20; // Number of items per page
+  const [currentPage, setCurrentPage] = useState(1); // Track the current page
+  
 
   const [data, setData] = useState({
     category: "",
@@ -156,6 +159,21 @@ const downloadDamageHistory = () => {
 };
 
 
+const totalPages = Math.ceil(filteredHistory.length / ITEMS_PER_PAGE);
+
+const paginatedHistory = filteredHistory.slice(
+  (currentPage - 1) * ITEMS_PER_PAGE,
+  currentPage * ITEMS_PER_PAGE
+);
+
+const handlePageChange = (newPage) => {
+  if (newPage >= 1 && newPage <= totalPages) {
+    setCurrentPage(newPage);
+  }
+};
+
+
+
   return (
     <section className="bg-white">
       <div className="container mx-auto p-4">
@@ -273,16 +291,12 @@ const downloadDamageHistory = () => {
         <th className="border border-gray-200 p-2">Date</th>
       </tr>
     </thead>
-    <tbody>
-      {filteredHistory.length > 0 ? (
-        filteredHistory.map((item, index) => (
+      <tbody>
+      {paginatedHistory.length > 0 ? (
+        paginatedHistory.map((item, index) => (
           <tr key={index} className="hover:bg-gray-100 text-center">
-            <td className="border border-gray-200 p-2">
-              {item.category?.name || "N/A"}
-            </td>
-            <td className="border border-gray-200 p-2">
-              {item.subCategory?.name || "N/A"}
-            </td>
+            <td className="border border-gray-200 p-2">{item.category?.name || "N/A"}</td>
+            <td className="border border-gray-200 p-2">{item.subCategory?.name || "N/A"}</td>
             <td className="border border-gray-200 p-2">{item.boxNo}</td>
             <td className="border border-gray-200 p-2">{item.quantity}</td>
             <td className="border border-gray-200 p-2">{item.action}</td>
@@ -299,6 +313,29 @@ const downloadDamageHistory = () => {
     </tbody>
   </table>
 </div>
+
+
+{totalPages > 1 && (
+  <div className="flex justify-between items-center mt-4">
+    <button
+      onClick={() => handlePageChange(currentPage - 1)}
+      disabled={currentPage === 1}
+      className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+    >
+      Previous
+    </button>
+    <span>
+      Page {currentPage} of {totalPages}
+    </span>
+    <button
+      onClick={() => handlePageChange(currentPage + 1)}
+      disabled={currentPage === totalPages}
+      className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+    >
+      Next
+    </button>
+  </div>
+)}
 
         {/* Modal Section */}
         {isModalOpen && (
@@ -345,11 +382,12 @@ const downloadDamageHistory = () => {
                     <option value="">Select Part</option>
                     {filteredSubCategories.map((sub) => (
                       <option key={sub._id} value={sub._id}>
-                        {sub.name}
+                        {`${sub.code} - ${sub.name}`}
                       </option>
                     ))}
                   </select>
                 </div>
+
 
                 {/* Add Box */}
                 <div>

@@ -97,7 +97,6 @@ const UserMenu = ({ close }) => {
               Inward Camera Part
             </Link>
 
-
             <Link
               onClick={handleClose}
               to={"/dashboard/out-product"}
@@ -122,14 +121,14 @@ const UserMenu = ({ close }) => {
               Ready Camera
             </Link>
 
-            {/* Delivered Camera Link */}
-            {/* <Link
+            {/* Delivery Camera Button */}
+            <Link
               onClick={handleClose}
-              to={"/dashboard/delivered-camera"}
+              to={"/dashboard/camera-delivery"}
               className="px-2 hover:bg-orange-200 py-1"
             >
-              Delivered Camera
-            </Link> */}
+              Deliver Camera
+            </Link>
           </>
         )}
 

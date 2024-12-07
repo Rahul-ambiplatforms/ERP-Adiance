@@ -15,6 +15,7 @@ import outProductRouter from './route/outproduct.route.js';
 import damageProductRouter from './route/damageproduct.route.js';
 import readyCameraRouter from './route/readycamera.route.js';
 import adminPanelRouter from './route/adminpanel.route.js'; // Import admin panel routes
+import deliveryRouter from './route/delivery.routes.js'; // Add import for delivery router
 
 const app = express();
 
@@ -54,6 +55,7 @@ app.use('/api/outproduct', outProductRouter);
 app.use('/api/damageproduct', damageProductRouter);
 app.use('/api/readycamera', readyCameraRouter);
 app.use('/api/adminpanel', adminPanelRouter); // Add admin panel routes
+app.use('/api/delivery', deliveryRouter);
 
 // Connect to the database and start the server
 connectDB().then(() => {

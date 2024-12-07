@@ -1,4 +1,4 @@
-export const baseURL = "http://localhost:8080";
+export const baseURL = import.meta.env.VITE_API_URL;
 
 const SummaryApi = {
     register: { url: '/api/user/register', method: 'post' },
@@ -62,6 +62,10 @@ const SummaryApi = {
         url: '/api/adminpanel/parts-summary',
         method: 'get',
       },
+
+    deliverCamera: { url: "/api/delivery/deliver", method: "post" },
+    getDeliveryHistory: { url: "/api/delivery/history", method: "get" },
+
       
 
 };

@@ -22,6 +22,36 @@ const Dashboard = () => {
   const [startDate, setStartDate] = useState(""); // Start date for filtering
   const [endDate, setEndDate] = useState(""); // End date for filtering
   const [filteredModalData, setFilteredModalData] = useState([]);
+  const [totalDeliveredByCategory, setTotalDeliveredByCategory] = useState({});
+
+
+
+  const fetchTotalDeliveredByCategory = async () => {
+    try {
+      const response = await Axios.get("http://localhost:8080/api/delivery/history");
+      if (response.data.success) {
+        const deliveredCount = {};
+  
+        response.data.data.forEach((record) => {
+          const category = record.category;
+          if (!deliveredCount[category]) {
+            deliveredCount[category] = 0;
+          }
+          record.boxes.forEach((box) => {
+            deliveredCount[category] += box.deliveredUIDs.length;
+          });
+        });
+  
+        setTotalDeliveredByCategory(deliveredCount);
+      }
+    } catch (error) {
+      console.error("Error fetching total delivered cameras:", error);
+    }
+  };
+  
+  useEffect(() => {
+    fetchTotalDeliveredByCategory();
+  }, []);
 
 
   // Fetch data from APIs
@@ -72,9 +102,15 @@ const Dashboard = () => {
       console.error("Error fetching total parts by category:", error);
     }
   };
+  
 
   useEffect(() => {
     fetchTotalPartsByCategory();
+  }, []);
+
+  
+  useEffect(() => {
+    fetchTotalDeliveredByCategory();
   }, []);
 
   // Memoized calculations
@@ -159,121 +195,88 @@ const Dashboard = () => {
         Axios({ ...SummaryApi.getDamageProducts }),
       ]);
   
-      const products = productsResponse.data.data;
-      const outProducts = outProductsResponse.data.data;
-      const damageProducts = damageProductsResponse.data.data;
+      const products = productsResponse.data.data || [];
+      const outProducts = outProductsResponse.data.data || [];
+      const damageProducts = damageProductsResponse.data.data || [];
   
       const startDateFilter = startDate ? new Date(startDate) : null;
       const endDateFilter = endDate ? new Date(endDate) : null;
   
-      // Filter products by category
-      const filteredProducts = products.filter((product) =>
-        product.category.some((cat) => cat._id === categoryId)
-      );
-  
       const partsMap = {};
   
-      // Aggregate inward quantities
-      filteredProducts.forEach((product) => {
-        const subCategory = product.subCategory[0];
-        if (!subCategory) return;
+      // **Step 1: Aggregate Inward Quantities**
+      products.forEach((product) => {
+        product.subCategory.forEach((subCategory) => {
+          const subCategoryId = subCategory._id;
   
-        const subCategoryId = subCategory._id;
-  
-        if (!partsMap[subCategoryId]) {
-          partsMap[subCategoryId] = {
-            partsCode: subCategory.code,
-            partsName: subCategory.name,
-            inwardQty: 0,
-            outwardQty: 0,
-            damageQty: 0,
-            lastUpdated: null,
-          };
-        }
-  
-        // Filter based on date range
-        const productLastUpdated = new Date(product.updatedAt);
-        if (
-          (!startDateFilter || productLastUpdated >= startDateFilter) &&
-          (!endDateFilter || productLastUpdated <= endDateFilter)
-        ) {
-          const inwardQty = product.boxes.reduce((sum, box) => sum + box.partsQty, 0);
-          partsMap[subCategoryId].inwardQty += inwardQty;
-  
-          if (!partsMap[subCategoryId].lastUpdated || partsMap[subCategoryId].lastUpdated < productLastUpdated) {
-            partsMap[subCategoryId].lastUpdated = productLastUpdated;
+          if (!partsMap[subCategoryId]) {
+            partsMap[subCategoryId] = {
+              partsCode: subCategory.code,
+              partsName: subCategory.name,
+              inwardQty: 0,
+              outwardQty: 0,
+              damageQty: 0,
+              lastUpdated: null,
+            };
           }
+  
+          const productLastUpdated = new Date(product.updatedAt);
+          if (
+            (!startDateFilter || productLastUpdated >= startDateFilter) &&
+            (!endDateFilter || productLastUpdated <= endDateFilter)
+          ) {
+            const inwardQty = product.boxes.reduce((sum, box) => sum + box.partsQty, 0);
+            partsMap[subCategoryId].inwardQty += inwardQty;
+  
+            if (
+              !partsMap[subCategoryId].lastUpdated ||
+              partsMap[subCategoryId].lastUpdated < productLastUpdated
+            ) {
+              partsMap[subCategoryId].lastUpdated = productLastUpdated;
+            }
+          }
+        });
+      });
+  
+      // **Step 2: Aggregate Outward Quantities**
+      outProducts.forEach((out) => {
+        const subCategoryId = out.subCategory._id;
+  
+        if (!partsMap[subCategoryId]) return;
+  
+        const outDate = new Date(out.updatedAt);
+        if (
+          (!startDateFilter || outDate >= startDateFilter) &&
+          (!endDateFilter || outDate <= endDateFilter)
+        ) {
+          partsMap[subCategoryId].outwardQty += out.quantity;
         }
       });
   
-      // Aggregate outward and damage quantities
-      Object.values(partsMap).forEach((part) => {
-        const subCategoryId = Object.keys(partsMap).find(
-          (key) => partsMap[key].partsCode === part.partsCode
-        );
+      // **Step 3: Aggregate Damage Quantities**
+      damageProducts.forEach((damage) => {
+        const subCategoryId = damage.subCategory._id;
   
-        // Outward quantities
-        outProducts
-          .filter(
-            (out) =>
-              out.subCategory._id === subCategoryId &&
-              out.category._id === categoryId // Filter by category
-          )
-          .filter((out) => {
-            const outDate = new Date(out.updatedAt);
-            return (
-              (!startDateFilter || outDate >= startDateFilter) &&
-              (!endDateFilter || outDate <= endDateFilter)
-            );
-          })
-          .forEach((out) => {
-            part.outwardQty += out.quantity;
-          });
+        if (!partsMap[subCategoryId]) return;
   
-        // Damage quantities
-        damageProducts
-          .filter(
-            (damage) =>
-              damage.subCategory._id === subCategoryId &&
-              damage.category._id === categoryId // Filter by category
-          )
-          .filter((damage) => {
-            const damageDate = new Date(damage.updatedAt);
-            return (
-              (!startDateFilter || damageDate >= startDateFilter) &&
-              (!endDateFilter || damageDate <= endDateFilter)
-            );
-          })
-          .forEach((damage) => {
-            part.damageQty += damage.action === "Add" ? damage.quantity : -damage.quantity;
-          });
-  
-        // Update last updated date
-        const lastUpdatedDates = [
-          ...outProducts
-            .filter(
-              (out) =>
-                out.subCategory._id === subCategoryId &&
-                out.category._id === categoryId // Filter by category
-            )
-            .map((out) => new Date(out.updatedAt)),
-          ...damageProducts
-            .filter(
-              (damage) =>
-                damage.subCategory._id === subCategoryId &&
-                damage.category._id === categoryId // Filter by category
-            )
-            .map((damage) => new Date(damage.updatedAt)),
-        ];
-  
-        const maxDate = lastUpdatedDates.reduce(
-          (latest, date) => (date > latest ? date : latest),
-          part.lastUpdated
-        );
-        part.lastUpdated = maxDate;
+        const damageDate = new Date(damage.updatedAt);
+        if (
+          (!startDateFilter || damageDate >= startDateFilter) &&
+          (!endDateFilter || damageDate <= endDateFilter)
+        ) {
+          partsMap[subCategoryId].damageQty +=
+            damage.action === "Add" ? damage.quantity : -damage.quantity;
+        }
       });
   
-      const tableData = Object.values(partsMap).map((part) => ({
+      // **Step 4: Filter Data for Selected Category**
+      const filteredPartsMap = Object.values(partsMap).filter((part) =>
+        products.some((product) =>
+          product.subCategory.some((sub) => sub.code === part.partsCode && product.category.some((cat) => cat._id === categoryId))
+        )
+      );
+  
+      const tableData = filteredPartsMap.map((part) => ({
         ...part,
         lastUpdated: part.lastUpdated ? part.lastUpdated.toLocaleString() : "N/A",
       }));
@@ -285,6 +288,7 @@ const Dashboard = () => {
       console.error("Error fetching modal data:", error);
     }
   };
+  
   
 
   const applyDateFilter = () => {
@@ -342,6 +346,12 @@ const Dashboard = () => {
                   {category.name}
                 </h3>
                 <p className="text-center text-sm text-gray-500">
+                  Delivered Camera:{" "}
+                  <span className="text-green-500 font-bold text-xl">
+                    {totalDeliveredByCategory[category.name] || 0}
+                  </span>
+                </p>
+                <p className="text-center text-sm text-gray-500">
                   Ready to delivery Camera:{" "}
                   <span className="text-purple-500 font-bold text-xl">{totalParts}</span>
                 </p>
@@ -357,7 +367,7 @@ const Dashboard = () => {
         {/* Modal for Table */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-4xl w-full h-[80vh] overflow-hidden flex flex-col">
+            <div className="bg-white rounded-lg p-6 max-w-5xl w-full h-[80vh] overflow-hidden flex flex-col">
               <h2 className="text-lg font-bold mb-4">Parts Summary</h2>
 
               {/* Date Filter */}

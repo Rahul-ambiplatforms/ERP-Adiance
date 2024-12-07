@@ -13,7 +13,8 @@ import CategoryPage from "../pages/CategoryPage";
 import SubCategoryPage from "../pages/SubCategoryPage";
 import UploadProduct from "../pages/UploadProduct";
 import ProductAdmin from "../pages/ProductAdmin";
-import ReadyCamera from "../pages/ReadyCamera"; // Import ReadyCamera
+import ReadyCamera from "../pages/ReadyCamera";
+import CameraDelivery from "../pages/CameraDelivery"; // Import CameraDelivery
 import AdminPermision from "../layouts/AdminPermision";
 import ProductListPage from "../pages/ProductListPage";
 import ProductDisplayPage from "../pages/ProductDisplayPage";
@@ -89,10 +90,18 @@ const router = createBrowserRouter([
             ),
           },
           {
-            path: "ready-camera", // Add ReadyCamera route
+            path: "ready-camera",
             element: (
               <AdminPermision>
                 <ReadyCamera />
+              </AdminPermision>
+            ),
+          },
+          {
+            path: "camera-delivery", // Add Camera Delivery route
+            element: (
+              <AdminPermision>
+                <CameraDelivery />
               </AdminPermision>
             ),
           },
