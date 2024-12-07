@@ -1,5 +1,5 @@
 import CategoryModel from "../models/category.model.js";
-import subCategoryModel from '../models/subCategory.model.js';
+import SubCategoryModel from "../models/subCategory.model.js";
 import ProductModel from "../models/product.model.js";
 
 export const AddCategoryController = async(request,response)=>{
@@ -94,7 +94,7 @@ export const deleteCategoryController = async(request,response)=>{
     try {
         const { _id } = request.body 
 
-        const checkSubCategory = await subCategoryModel.find({
+        const checkSubCategory = await SubCategoryModel.find({
             category : {
                 "$in" : [ _id ]
             }
