@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import "../models/category.model.js";
-import "../models/subCategory.model.js";
+import "./subCategory.model.js";
 
 const damageProductSchema = new mongoose.Schema(
   {
